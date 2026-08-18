@@ -1,7 +1,10 @@
 FROM debian:bookworm-slim
-LABEL maintainer Ward Wouts
 
-ENV LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=C.UTF-8 DISPLAY=:0.0 CURSOR="-nocursor"
+LABEL org.opencontainers.image.title="KOReader Everywhere" \
+      org.opencontainers.image.description="KOReader in a responsive browser container" \
+      org.opencontainers.image.source="https://github.com/DishanRajapaksha/koreader-everywhere"
+
+ENV LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=C.UTF-8 DISPLAY=:0.0
 ENV EMULATE_READER_W="600" EMULATE_READER_H="800"
 ENV VNC_AUTH="password" VNC_PASSWORD_FILE="/config/vnc.passwd"
 ARG VERSION=0
