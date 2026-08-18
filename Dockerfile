@@ -21,7 +21,7 @@ RUN apt-get update \
         tigervnc-standalone-server \
         tigervnc-tools \
         supervisor \
-        libsdl2-2.0-0 \
+        tzdata \
     && if [ -n "${ARCH:-}" ]; then \
          KOREADER_ARCH="$ARCH"; \
        else \
