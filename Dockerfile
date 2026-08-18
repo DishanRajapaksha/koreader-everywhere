@@ -15,8 +15,8 @@ RUN apt-get update \
     && apt-get install -y \
         novnc \
         wget \
-        x11vnc \
-        xvfb \
+        tigervnc-standalone-server \
+        tigervnc-tools \
         supervisor \
         net-tools \
         iputils-ping \
@@ -50,7 +50,7 @@ RUN adduser user \
     && chown -R user:user $HOME
 
 # Force vnc.html to be used for novnc, to avoid having the directory listing page.
-# Set resizing to "local scaling".
+# Ask the VNC server to match the browser viewport on resize/rotation.
 # Turn off the noVNC control bar.
 # Set logo on connect to koreader.
 RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html \
@@ -58,18 +58,18 @@ RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html \
     && mkdir -p /home/user/.config \
     && mkdir -p /opt \
     && ln -s /config /home/user/.config/koreader \
-    && sed -i "s/UI.initSetting('resize', 'off');/UI.initSetting('resize', 'scale');/" /usr/share/novnc/app/ui.js \
+    && sed -i "s/UI.initSetting('resize', 'off');/UI.initSetting('resize', 'remote');/" /usr/share/novnc/app/ui.js \
     && sed -i "s/#noVNC_control_bar_anchor {/#noVNC_control_bar_anchor {\n  display: none;/" /usr/share/novnc/app/styles/base.css \
     && sed -i 's/<div class="noVNC_logo" translate="no"><span>no<\/span>VNC<\/div>/<div class="noVNC_logo" translate="no"><img src="app\/images\/koreader-logo.svg" width=80%><\/div>/' /usr/share/novnc/vnc.html \
-    && sed -i 's/<title>noVNC<\/title>/<title>KOReader<\/title>/' /usr/share/novnc/vnc.html \
+    && sed -i 's/<title>noVNC<\/title>/<title>KOReader Everywhere<\/title>/' /usr/share/novnc/vnc.html \
     && sed -i 's/background-color:#494949;/background-color:#DDDDDD;/' /usr/share/novnc/app/styles/base.css \
     && sed -i 's/background-color: #313131;/background-color:#CCCCCC;/' /usr/share/novnc/app/styles/base.css \
     && chown -R user:user $HOME /config
 
-# Configure supervisord and secure VNC startup.
+# Configure supervisord and VNC startup.
 COPY resources/supervisord.conf /etc/supervisor/supervisord.conf
-COPY resources/start_x11vnc /opt/start_x11vnc
-RUN chmod +x /opt/start_x11vnc
+COPY resources/start_vnc /opt/start_vnc
+RUN chmod +x /opt/start_vnc
 ENTRYPOINT [ "supervisord", "-c", "/etc/supervisor/supervisord.conf" ]
 
 # Add default settings file to set HOME dir to /books
