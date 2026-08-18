@@ -19,11 +19,15 @@ trap cleanup EXIT
 
 cleanup
 
-echo "Building smoke-test image with KOReader ${KOREADER_VERSION}"
-docker build \
-  --build-arg KOREADER_VERSION="$KOREADER_VERSION" \
-  --tag "$IMAGE_TAG" \
-  .
+if [ "${SMOKE_SKIP_BUILD:-false}" = "true" ]; then
+  echo "Using prebuilt smoke-test image $IMAGE_TAG"
+else
+  echo "Building smoke-test image with KOReader ${KOREADER_VERSION}"
+  docker build \
+    --build-arg KOREADER_VERSION="$KOREADER_VERSION" \
+    --tag "$IMAGE_TAG" \
+    .
+fi
 
 echo "Starting smoke-test container"
 docker run -d \
