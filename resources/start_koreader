@@ -1,8 +1,23 @@
 #!/bin/bash
+set -euo pipefail
 
-if [ ! -f /home/user/.config/koreader/settings.reader.lua ]; then
-    mkdir -p /home/user/.config/koreader
-    cp /opt/settings.reader.lua /home/user/.config/koreader/settings.reader.lua
+CONFIG_DIR="/home/user/.config/koreader"
+SETTINGS_FILE="$CONFIG_DIR/settings.reader.lua"
+X_SOCKET="/tmp/.X11-unix/X0"
+
+mkdir -p "$CONFIG_DIR"
+if [ ! -f "$SETTINGS_FILE" ]; then
+    cp /opt/settings.reader.lua "$SETTINGS_FILE"
 fi
-sleep 10
-exec /usr/bin/koreader
+
+# Wait for the VNC-backed X server instead of guessing with a fixed sleep.
+for _ in {1..300}; do
+    if [ -S "$X_SOCKET" ]; then
+        printf '%s\n' "$$" > /tmp/koreader.pid
+        exec /usr/bin/koreader
+    fi
+    sleep 0.1
+done
+
+echo >&2 "Timed out waiting for the X server at $X_SOCKET"
+exit 1

@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+[ -S /tmp/.X11-unix/X0 ]
+[ -r /tmp/koreader.pid ]
+PID="$(cat /tmp/koreader.pid)"
+kill -0 "$PID" 2>/dev/null
+wget -q --spider http://127.0.0.1:8080/
