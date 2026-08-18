@@ -1,0 +1,32 @@
+#!/bin/sh
+set -eu
+
+DISPLAY="${DISPLAY:-:0.0}"
+export DISPLAY
+
+while :; do
+    set -- $(xdotool getdisplaygeometry 2>/dev/null || true)
+    width="${1:-}"
+    height="${2:-}"
+
+    set -- $(xdotool search --class '^luajit$' 2>/dev/null || true)
+    window_id="${1:-}"
+
+    if [ -n "$window_id" ] && [ -n "$width" ] && [ -n "$height" ]; then
+        window_geometry="$(xdotool getwindowgeometry --shell "$window_id" 2>/dev/null || true)"
+        current_x="$(printf '%s\n' "$window_geometry" | awk -F= '$1 == "X" { print $2 }')"
+        current_y="$(printf '%s\n' "$window_geometry" | awk -F= '$1 == "Y" { print $2 }')"
+        current_width="$(printf '%s\n' "$window_geometry" | awk -F= '$1 == "WIDTH" { print $2 }')"
+        current_height="$(printf '%s\n' "$window_geometry" | awk -F= '$1 == "HEIGHT" { print $2 }')"
+
+        if [ "$current_x" != "0" ] || [ "$current_y" != "0" ] \
+            || [ "$current_width" != "$width" ] || [ "$current_height" != "$height" ]; then
+            if xdotool windowmove --sync "$window_id" 0 0 \
+                && xdotool windowsize --sync "$window_id" "$width" "$height"; then
+                echo "Resized KOReader window to ${width}x${height}."
+            fi
+        fi
+    fi
+
+    sleep 0.25
+done

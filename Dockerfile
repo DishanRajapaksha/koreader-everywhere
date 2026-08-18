@@ -20,6 +20,7 @@ RUN apt-get update \
         xz-utils \
         tigervnc-standalone-server \
         tigervnc-tools \
+        xdotool \
         supervisor \
         tzdata \
     && if [ -n "${ARCH:-}" ]; then \
@@ -59,8 +60,8 @@ RUN adduser --disabled-password --gecos "" user \
     && chown -R user:user "$HOME" /config
 
 COPY resources/supervisord.conf /etc/supervisor/supervisord.conf
-COPY resources/start_vnc resources/start_koreader resources/healthcheck resources/settings.reader.lua /opt/
-RUN chmod +x /opt/start_vnc /opt/start_koreader /opt/healthcheck
+COPY resources/start_vnc resources/start_resize_watcher resources/start_koreader resources/healthcheck resources/settings.reader.lua /opt/
+RUN chmod +x /opt/start_vnc /opt/start_resize_watcher /opt/start_koreader /opt/healthcheck
 
 ENTRYPOINT ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD ["/opt/healthcheck"]
