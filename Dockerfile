@@ -3,7 +3,7 @@ LABEL maintainer Ward Wouts
 
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=C.UTF-8 DISPLAY=:0.0 CURSOR="-nocursor"
 ENV EMULATE_READER_W="600" EMULATE_READER_H="800"
-ENV PASSWD="-rfbauth /passwd"
+ENV VNC_AUTH="password" VNC_PASSWORD_FILE="/config/vnc.passwd"
 ARG VERSION=0
 ARG ARCH=wrong
 ARG KOREADERURL=https://github.com/koreader/koreader/releases/download/v$VERSION/koreader-linux-$ARCH-v$VERSION.tar.xz
@@ -34,7 +34,6 @@ COPY resources/icons/* /usr/share/novnc/app/images/icons/
 # Install koreader logo
 COPY resources/koreader-logo.svg /usr/share/novnc/app/images/
 
-
 ENV HOME /home/user
 
 RUN adduser user \
@@ -49,17 +48,18 @@ RUN ln -s /usr/share/novnc/vnc.html /usr/share/novnc/index.html \
     && mkdir -p /home/user/.config \
     && mkdir -p /opt \
     && ln -s /config /home/user/.config/koreader \
-    && x11vnc -storepasswd koreader /passwd \
     && sed -i "s/UI.initSetting('resize', 'off');/UI.initSetting('resize', 'scale');/" /usr/share/novnc/app/ui.js \
     && sed -i "s/#noVNC_control_bar_anchor {/#noVNC_control_bar_anchor {\n  display: none;/" /usr/share/novnc/app/styles/base.css \
     && sed -i 's/<div class="noVNC_logo" translate="no"><span>no<\/span>VNC<\/div>/<div class="noVNC_logo" translate="no"><img src="app\/images\/koreader-logo.svg" width=80%><\/div>/' /usr/share/novnc/vnc.html \
     && sed -i 's/<title>noVNC<\/title>/<title>KOReader<\/title>/' /usr/share/novnc/vnc.html \
     && sed -i 's/background-color:#494949;/background-color:#DDDDDD;/' /usr/share/novnc/app/styles/base.css \
     && sed -i 's/background-color: #313131;/background-color:#CCCCCC;/' /usr/share/novnc/app/styles/base.css \
-    && chown -R user:user $HOME /config /passwd
+    && chown -R user:user $HOME /config
 
-# Configure supervisord.
+# Configure supervisord and secure VNC startup.
 COPY resources/supervisord.conf /etc/supervisor/supervisord.conf
+COPY resources/start_x11vnc /opt/start_x11vnc
+RUN chmod +x /opt/start_x11vnc
 ENTRYPOINT [ "supervisord", "-c", "/etc/supervisor/supervisord.conf" ]
 
 # Add default settings file to set HOME dir to /books
