@@ -132,23 +132,35 @@ Docker BuildKit supplies the target architecture automatically. Supported target
 
 ## Container publishing
 
-Container images are published only for KOReader Everywhere release tags. A release tag must match `VERSION`.
+Container images are published only for KOReader Everywhere release tags. Tags do not use a `v` prefix.
 
-For example, if `VERSION` contains `0.1.0`:
+If `VERSION` contains `0.1.0`, both the stable tag and prereleases of that version are accepted:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag 0.1.0-rc.1
+git push origin 0.1.0-rc.1
+
+# Later, for the stable release:
+git tag 0.1.0
+git push origin 0.1.0
 ```
 
-Before publishing, CI builds an `amd64` image, starts it, waits for Docker health, and verifies the noVNC page. Only after that passes does GitHub Actions build and publish the `amd64`/`arm64` release manifest:
+Before publishing, CI builds an `amd64` image, starts it, waits for Docker health, and verifies the noVNC page. Only after that passes does GitHub Actions build and publish the `amd64`/`arm64` release manifest.
+
+A prerelease such as `0.1.0-rc.1` publishes only:
 
 ```text
-ghcr.io/dishanrajapaksha/koreader-everywhere:latest
-ghcr.io/dishanrajapaksha/koreader-everywhere:0.1.0
+ghcr.io/dishanrajapaksha/koreader-everywhere:0.1.0-rc.1
 ```
 
-`KOREADER_VERSION` is independent of this release tag. A mismatched project tag, such as `v0.2.0` while `VERSION` still contains `0.1.0`, fails before publishing. Pull requests and manual workflow runs execute the same boot smoke test but never publish an image.
+The stable `0.1.0` release publishes:
+
+```text
+ghcr.io/dishanrajapaksha/koreader-everywhere:0.1.0
+ghcr.io/dishanrajapaksha/koreader-everywhere:latest
+```
+
+`KOREADER_VERSION` is independent of the project release tag. A tag for another base version, such as `0.2.0` while `VERSION` still contains `0.1.0`, fails before publishing. Pull requests and manual workflow runs execute the same boot smoke test but never publish an image.
 
 ## KOReader updates
 
