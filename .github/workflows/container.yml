@@ -51,7 +51,7 @@ jobs:
             KOREADER_VERSION=${{ steps.version.outputs.koreader }}
           tags: koreader-everywhere:smoke
           cache-from: type=gha,scope=${{ env.CACHE_SCOPE }}
-          cache-to: type=gha,mode=max,scope=${{ env.CACHE_SCOPE }}
+          cache-to: type=gha,mode=max,scope=${{ env.CACHE_SCOPE }},ignore-error=true
 
       - name: Boot and verify container
         env:
@@ -144,6 +144,6 @@ jobs:
             KOREADER_VERSION=${{ steps.versions.outputs.koreader }}
           tags: ${{ steps.tags.outputs.value }}
           cache-from: type=gha,scope=${{ env.CACHE_SCOPE }}
-          cache-to: type=gha,mode=max,scope=${{ env.CACHE_SCOPE }}
+          cache-to: type=gha,mode=max,scope=${{ env.CACHE_SCOPE }},ignore-error=true
           sbom: true
           provenance: mode=max
