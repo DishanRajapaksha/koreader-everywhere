@@ -141,14 +141,20 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-GitHub Actions then builds both architectures and publishes:
+Before publishing, CI builds an `amd64` image, starts it, waits for Docker health, and verifies the noVNC page. Only after that passes does GitHub Actions build and publish the `amd64`/`arm64` release manifest:
 
 ```text
 ghcr.io/dishanrajapaksha/koreader-everywhere:latest
 ghcr.io/dishanrajapaksha/koreader-everywhere:0.1.0
 ```
 
-`KOREADER_VERSION` is independent of this release tag. A mismatched project tag, such as `v0.2.0` while `VERSION` still contains `0.1.0`, fails before publishing. Pull requests and manual workflow runs build the image for validation but never publish it.
+`KOREADER_VERSION` is independent of this release tag. A mismatched project tag, such as `v0.2.0` while `VERSION` still contains `0.1.0`, fails before publishing. Pull requests and manual workflow runs execute the same boot smoke test but never publish an image.
+
+## KOReader updates
+
+A scheduled GitHub Actions workflow checks upstream KOReader releases every Monday. When a newer stable release appears, it updates `KOREADER_VERSION`, builds and boots a candidate container, and opens a pull request only if that smoke test succeeds.
+
+If a PR for the same KOReader release is already open, the workflow leaves it alone. You can also run the update check manually from GitHub Actions.
 
 ## Components and attribution
 

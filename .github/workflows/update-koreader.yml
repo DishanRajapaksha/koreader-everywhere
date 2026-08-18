@@ -1,0 +1,88 @@
+name: Check for KOReader updates
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Check latest KOReader release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current="$(tr -d '[:space:]' < KOREADER_VERSION)"
+          latest_tag="$(gh api repos/koreader/koreader/releases/latest --jq '.tag_name')"
+          latest="${latest_tag#v}"
+
+          if ! [[ "$latest" =~ ^[0-9]{4}\.[0-9]{2}(\.[0-9]+)?$ ]]; then
+            echo "Unexpected KOReader release tag: $latest_tag"
+            exit 1
+          fi
+
+          branch="automation/koreader-${latest}"
+          existing_pr="$(gh pr list --state open --head "$branch" --json number --jq '.[0].number // empty')"
+
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "existing_pr=$existing_pr" >> "$GITHUB_OUTPUT"
+
+          if [ "$current" = "$latest" ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            echo "Already using KOReader $current."
+          elif [ -n "$existing_pr" ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            echo "PR #$existing_pr already tracks KOReader $latest."
+          else
+            echo "update=true" >> "$GITHUB_OUTPUT"
+            echo "KOReader update available: $current -> $latest"
+          fi
+
+      - name: Update KOReader version
+        if: steps.check.outputs.update == 'true'
+        shell: bash
+        run: printf '%s\n' '${{ steps.check.outputs.latest }}' > KOREADER_VERSION
+
+      - name: Smoke-test candidate KOReader release
+        if: steps.check.outputs.update == 'true'
+        env:
+          KOREADER_VERSION: ${{ steps.check.outputs.latest }}
+        run: .github/scripts/smoke-test.sh
+
+      - name: Open update pull request
+        if: steps.check.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_VERSION: ${{ steps.check.outputs.current }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest }}
+          UPDATE_BRANCH: ${{ steps.check.outputs.branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$UPDATE_BRANCH"
+          git add KOREADER_VERSION
+          git commit -m "Update KOReader to ${LATEST_VERSION}"
+          git push --set-upstream origin "$UPDATE_BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$UPDATE_BRANCH" \
+            --title "Update KOReader to ${LATEST_VERSION}" \
+            --body "Updates the embedded KOReader release from ${CURRENT_VERSION} to ${LATEST_VERSION}. The candidate image passed the repository smoke test before this PR was opened."

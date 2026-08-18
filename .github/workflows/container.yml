@@ -10,6 +10,7 @@ on:
       - VERSION
       - KOREADER_VERSION
       - resources/**
+      - .github/scripts/smoke-test.sh
       - .github/workflows/container.yml
   workflow_dispatch:
 
@@ -44,63 +45,10 @@ jobs:
             exit 1
           fi
 
-      - name: Build smoke-test image
-        shell: bash
-        run: |
-          docker build \
-            --build-arg KOREADER_VERSION="${{ steps.versions.outputs.koreader }}" \
-            --tag koreader-everywhere:smoke \
-            .
-
-      - name: Start container
-        shell: bash
-        run: |
-          docker run -d \
-            --name koreader-smoke \
-            -e VNC_PASSWORD=ci-smoke-password \
-            -p 127.0.0.1:8080:8080 \
-            koreader-everywhere:smoke
-
-      - name: Verify container health and web UI
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          healthy=false
-          for _ in {1..60}; do
-            state="$(docker inspect --format '{{.State.Status}}' koreader-smoke)"
-            health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' koreader-smoke)"
-
-            if [ "$health" = "healthy" ]; then
-              healthy=true
-              break
-            fi
-
-            if [ "$state" = "exited" ] || [ "$state" = "dead" ]; then
-              echo "Container stopped before becoming healthy."
-              docker logs koreader-smoke
-              exit 1
-            fi
-
-            sleep 2
-          done
-
-          if [ "$healthy" != "true" ]; then
-            echo "Container did not become healthy."
-            docker inspect koreader-smoke
-            docker logs koreader-smoke
-            exit 1
-          fi
-
-          curl --fail --silent --show-error http://127.0.0.1:8080/ | grep -q 'KOReader Everywhere'
-
-      - name: Show logs on failure
-        if: failure()
-        run: docker logs koreader-smoke || true
-
-      - name: Remove smoke-test container
-        if: always()
-        run: docker rm -f koreader-smoke || true
+      - name: Build and boot container
+        env:
+          KOREADER_VERSION: ${{ steps.versions.outputs.koreader }}
+        run: .github/scripts/smoke-test.sh
 
   publish:
     name: Publish multi-architecture image
