@@ -125,14 +125,23 @@ Docker BuildKit supplies the target architecture automatically. Supported target
 
 ## Container publishing
 
-GitHub Actions builds both architectures and publishes a multi-architecture image to:
+Container images are published only for version tags. A release tag must match the version stored in `VERSION`.
+
+For example, if `VERSION` contains `2026.03`:
+
+```bash
+git tag v2026.03
+git push origin v2026.03
+```
+
+GitHub Actions then builds both architectures and publishes:
 
 ```text
 ghcr.io/dishanrajapaksha/koreader-everywhere:latest
-ghcr.io/dishanrajapaksha/koreader-everywhere:<KOReader version>
+ghcr.io/dishanrajapaksha/koreader-everywhere:2026.03
 ```
 
-Pull requests build the image without publishing it. Pushes to `main` that change the container, KOReader version, runtime resources, or workflow publish the image. GitHub Actions and Docker dependencies are tracked by Dependabot.
+A mismatched tag, such as `v2026.04` while `VERSION` still contains `2026.03`, fails before publishing. Pull requests and manual workflow runs build the image for validation but never publish it. GitHub Actions and Docker dependencies are tracked by Dependabot.
 
 ## Components and attribution
 
