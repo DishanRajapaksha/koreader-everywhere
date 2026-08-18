@@ -5,8 +5,8 @@ ENV LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=C.UTF-8 DISPLAY=:0.0 CURSOR="-n
 ENV EMULATE_READER_W="600" EMULATE_READER_H="800"
 ENV VNC_AUTH="password" VNC_PASSWORD_FILE="/config/vnc.passwd"
 ARG VERSION=0
-ARG ARCH=wrong
-ARG KOREADERURL=https://github.com/koreader/koreader/releases/download/v$VERSION/koreader-linux-$ARCH-v$VERSION.tar.xz
+ARG TARGETARCH
+ARG ARCH
 
 # Install koreader and dependencies.
 RUN apt-get update \
@@ -22,8 +22,18 @@ RUN apt-get update \
         iputils-ping \
         libsdl2-2.0-0 \
         unzip \
-    && echo $KOREADERURL \
-    && wget -q $KOREADERURL -O /tmp/koreader.tar.xz \
+    && if [ -n "${ARCH:-}" ]; then \
+         KOREADER_ARCH="$ARCH"; \
+       else \
+         case "$TARGETARCH" in \
+           amd64) KOREADER_ARCH="x86_64" ;; \
+           arm64) KOREADER_ARCH="arm64" ;; \
+           *) echo "Unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
+         esac; \
+       fi \
+    && KOREADER_URL="https://github.com/koreader/koreader/releases/download/v${VERSION}/koreader-linux-${KOREADER_ARCH}-v${VERSION}.tar.xz" \
+    && echo "$KOREADER_URL" \
+    && wget -q "$KOREADER_URL" -O /tmp/koreader.tar.xz \
     && cd /usr \
     && tar -xaf /tmp/koreader.tar.xz \
     && rm -rf /var/lib/apt/lists/* \
