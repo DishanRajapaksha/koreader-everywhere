@@ -7,7 +7,7 @@ LABEL org.opencontainers.image.title="KOReader Everywhere" \
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=C.UTF-8 DISPLAY=:0.0
 ENV EMULATE_READER_W="600" EMULATE_READER_H="800"
 ENV VNC_AUTH="password" VNC_PASSWORD_FILE="/config/vnc.passwd"
-ARG VERSION=0
+ARG KOREADER_VERSION=0
 ARG TARGETARCH
 ARG ARCH
 
@@ -31,7 +31,7 @@ RUN apt-get update \
            *) echo "Unsupported architecture: $TARGETARCH" >&2; exit 1 ;; \
          esac; \
        fi \
-    && KOREADER_URL="https://github.com/koreader/koreader/releases/download/v${VERSION}/koreader-linux-${KOREADER_ARCH}-v${VERSION}.tar.xz" \
+    && KOREADER_URL="https://github.com/koreader/koreader/releases/download/v${KOREADER_VERSION}/koreader-linux-${KOREADER_ARCH}-v${KOREADER_VERSION}.tar.xz" \
     && echo "Downloading $KOREADER_URL" \
     && wget --https-only --tries=3 -q "$KOREADER_URL" -O /tmp/koreader.tar.xz \
     && xz -t /tmp/koreader.tar.xz \

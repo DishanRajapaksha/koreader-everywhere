@@ -109,14 +109,21 @@ reader.example.com {
 
 Caddy handles the WebSocket upgrade used by noVNC. Add whatever authentication policy is appropriate for the deployment rather than exposing passwordless VNC to the public Internet.
 
+## Versioning
+
+KOReader Everywhere and KOReader have independent versions:
+
+- `VERSION` is the KOReader Everywhere release version, for example `0.1.0`.
+- `KOREADER_VERSION` is the upstream KOReader version embedded in the image, for example `2026.03`.
+
+This lets KOReader Everywhere ship fixes without pretending there is a new KOReader release.
+
 ## Building locally
 
-The KOReader version is stored in `VERSION`.
-
 ```bash
-VERSION="$(cat VERSION)"
+KOREADER_VERSION="$(cat KOREADER_VERSION)"
 docker build \
-  --build-arg VERSION="$VERSION" \
+  --build-arg KOREADER_VERSION="$KOREADER_VERSION" \
   -t koreader-everywhere:local \
   .
 ```
@@ -125,23 +132,23 @@ Docker BuildKit supplies the target architecture automatically. Supported target
 
 ## Container publishing
 
-Container images are published only for version tags. A release tag must match the version stored in `VERSION`.
+Container images are published only for KOReader Everywhere release tags. A release tag must match `VERSION`.
 
-For example, if `VERSION` contains `2026.03`:
+For example, if `VERSION` contains `0.1.0`:
 
 ```bash
-git tag v2026.03
-git push origin v2026.03
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 GitHub Actions then builds both architectures and publishes:
 
 ```text
 ghcr.io/dishanrajapaksha/koreader-everywhere:latest
-ghcr.io/dishanrajapaksha/koreader-everywhere:2026.03
+ghcr.io/dishanrajapaksha/koreader-everywhere:0.1.0
 ```
 
-A mismatched tag, such as `v2026.04` while `VERSION` still contains `2026.03`, fails before publishing. Pull requests and manual workflow runs build the image for validation but never publish it. GitHub Actions and Docker dependencies are tracked by Dependabot.
+`KOREADER_VERSION` is independent of this release tag. A mismatched project tag, such as `v0.2.0` while `VERSION` still contains `0.1.0`, fails before publishing. Pull requests and manual workflow runs build the image for validation but never publish it.
 
 ## Components and attribution
 
